@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recognizer — Review</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap');
+
+    :root {
+      --cyan:    #00e5ff;
+      --cyan-dim: #00b8cc;
+      --cyan-glow: rgba(0,229,255,0.15);
+      --orange:  #ff6d00;
+      --red:     #ff1744;
+      --green:   #00e676;
+      --bg:      #020d14;
+      --bg2:     #041824;
+      --bg3:     #071f2e;
+      --border:  rgba(0,229,255,0.18);
+      --border-bright: rgba(0,229,255,0.5);
+      --text:    #c8eaf5;
+      --text-dim: #5a8090;
+      --mono:    'Share Tech Mono', monospace;
+      --sans:    'Exo 2', 'Segoe UI', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ---- Header ---- */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border-bright);
+      padding: 16px 32px;
+      display: flex;
+      align-items: baseline;
+      gap: 20px;
+      box-shadow: 0 0 24px rgba(0,229,255,0.08);
+    }
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      text-shadow: 0 0 12px var(--cyan);
+    }
+    header .dir { font-size: 0.78rem; color: var(--text-dim); font-family: var(--mono); }
+    /* TODO: restore .dir-form styles when re-enabling dir editing + rescan */
+    .dir-label {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tab-action {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--orange);
+      padding: 12px 18px;
+      font-size: 0.8rem;
+      font-family: var(--sans);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-action:hover { color: #ff9500; border-bottom-color: var(--orange); }
+    .tab-action:disabled { opacity: 0.4; cursor: default; }
+
+    /* ---- Tabs ---- */
+    nav.tabs {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0;
+      padding: 0 28px;
+      overflow-x: auto;
+    }
+    nav.tabs button {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      padding: 12px 18px;
+      font-size: 0.8rem;
+      font-family: var(--sans);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s, text-shadow 0.15s;
+    }
+    nav.tabs button:hover { color: var(--cyan); }
+    nav.tabs button.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+    }
+    .badge {
+      display: inline-block;
+      background: transparent;
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      border-radius: 3px;
+      font-size: 0.68rem;
+      padding: 0px 6px;
+      margin-left: 6px;
+      font-family: var(--mono);
+      vertical-align: middle;
+    }
+    .badge.zero { border-color: #1a3040; color: #1a3040; }
+
+    /* ---- Sections ---- */
+    .section { display: none; padding: 28px 32px; max-width: 1400px; }
+    .section.active { display: block; }
+
+    /* ---- Dashboard stats ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0.4;
+    }
+    .stat-card:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 0 16px var(--cyan-glow);
+    }
+    .stat-card .value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--cyan);
+      font-family: var(--mono);
+      text-shadow: 0 0 14px rgba(0,229,255,0.4);
+      line-height: 1;
+    }
+    .stat-card .label { font-size: 0.72rem; color: var(--text-dim); margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .stat-card.highlight .value { color: var(--orange); text-shadow: 0 0 14px rgba(255,109,0,0.5); }
+    .stat-card.highlight::before { background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+
+    /* ---- Group cards ---- */
+    .group-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .group-card:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 0 20px var(--cyan-glow);
+    }
+    .group-header {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .group-header .group-id {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--cyan);
+      text-shadow: 0 0 8px var(--cyan);
+    }
+    .group-header .group-meta { font-size: 0.75rem; color: var(--text-dim); }
+    .group-header .hash {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: #1e4050;
+      margin-left: auto;
+    }
+
+    /* ---- File cards within a group ---- */
+    .file-row { display: flex; flex-wrap: wrap; gap: 0; }
+    .file-card {
+      flex: 1 1 260px;
+      border-right: 1px solid var(--border);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+    .file-card:last-child { border-right: none; }
+    .file-card.staged {
+      background: rgba(255,23,68,0.06);
+      opacity: 0.65;
+    }
+
+    .thumb-wrap {
+      width: 100%;
+      height: 160px;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+
+    .file-meta { flex: 1; }
+    .file-current {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+    .file-original { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; word-break: break-all; }
+    .file-stats { font-size: 0.72rem; color: var(--text-dim); margin-top: 6px; display: flex; gap: 12px; }
+    .letter-badge {
+      display: inline-block;
+      background: transparent;
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      border-radius: 2px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0 6px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ---- Resolution variants ---- */
+    .res-file-row { padding: 0 16px 4px; }
+    .res-file-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .res-file-item:last-child { border-bottom: none; }
+    .res-thumb {
+      width: 100px; height: 60px;
+      object-fit: cover;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: #000;
+      flex-shrink: 0;
+    }
+    .res-badge {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: transparent;
+      border: 1px solid var(--cyan-dim);
+      color: var(--cyan-dim);
+      border-radius: 3px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+      min-width: 52px;
+      text-align: center;
+    }
+    .res-badge.highest { border-color: var(--green); color: var(--green); }
+    .keep-label { font-size: 0.68rem; color: var(--green); font-weight: 700; flex-shrink: 0; letter-spacing: 0.06em; }
+    .res-filename { font-family: var(--mono); font-size: 0.76rem; color: var(--text); flex: 1; word-break: break-all; }
+    .res-meta { font-size: 0.7rem; color: var(--text-dim); flex-shrink: 0; white-space: nowrap; }
+
+    /* ---- Unreadable / issues ---- */
+    .issue-list { display: flex; flex-direction: column; gap: 8px; }
+    .issue-item {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .issue-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .issue-name { font-family: var(--mono); font-size: 0.8rem; flex: 1; word-break: break-all; color: var(--text); }
+    .issue-note { font-size: 0.72rem; color: var(--text-dim); }
+
+    /* ---- Staging section ---- */
+    .staged-list { display: flex; flex-direction: column; gap: 8px; }
+    .staged-item {
+      background: rgba(255,23,68,0.05);
+      border: 1px solid rgba(255,23,68,0.3);
+      border-radius: 4px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .staged-item .staged-name { font-family: var(--mono); font-size: 0.8rem; flex: 1; word-break: break-all; color: var(--red); }
+    .staged-item .staged-size { font-size: 0.72rem; color: var(--text-dim); flex-shrink: 0; }
+    .staged-total {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.83rem;
+      color: var(--text-dim);
+    }
+    .staged-total strong { color: var(--red); }
+
+    /* ---- Buttons ---- */
+    .btn {
+      border: none;
+      border-radius: 3px;
+      padding: 6px 14px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      font-family: var(--sans);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: box-shadow 0.15s, opacity 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-stage {
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+    }
+    .btn-stage:hover { box-shadow: 0 0 12px rgba(255,23,68,0.5); background: rgba(255,23,68,0.1); }
+    .btn-unstage {
+      background: transparent;
+      border: 1px solid var(--text-dim);
+      color: var(--text-dim);
+    }
+    .btn-unstage:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 10px var(--cyan-glow); }
+    .btn:disabled { opacity: 0.3; cursor: default; }
+    .btn-rename {
+      background: none; border: none;
+      color: #1e4050;
+      cursor: pointer; padding: 0 4px;
+      font-size: 0.85rem; line-height: 1; vertical-align: middle;
+      transition: color 0.15s;
+    }
+    .btn-rename:hover { color: var(--cyan); }
+    .btn-flag-review {
+      background: none; border: none;
+      color: #1e4050;
+      cursor: pointer; padding: 0 4px;
+      font-size: 0.82rem; line-height: 1; vertical-align: middle;
+      transition: color 0.15s;
+    }
+    .btn-flag-review:hover { color: var(--orange); }
+    .rename-input {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      background: var(--bg);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      border-radius: 3px;
+      padding: 2px 6px;
+      flex: 1; min-width: 0; outline: none;
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+    .btn-save-rename {
+      background: transparent;
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 3px 10px; font-size: 0.72rem;
+    }
+    .btn-save-rename:hover { box-shadow: 0 0 10px rgba(0,230,118,0.4); }
+    .btn-cancel-rename {
+      background: transparent;
+      border: 1px solid #1e4050;
+      color: var(--text-dim);
+      padding: 3px 8px; font-size: 0.72rem;
+    }
+
+    /* ---- Section titles ---- */
+    .section-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      text-shadow: 0 0 10px var(--cyan);
+    }
+    .section-desc { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #1e4050;
+      font-size: 0.88rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .empty-state .icon { font-size: 2rem; display: block; margin-bottom: 10px; filter: grayscale(1) opacity(0.3); }
+
+    /* ---- Sub-section divider ---- */
+    .sub-section { margin-top: 40px; }
+    .sub-section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .sub-section-header .sub-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+    }
+    .sub-section-header .sub-rule {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .sub-section-header .sub-count {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 8px;
+    }
+
+    /* ---- Clickable res-thumb ---- */
+    .res-thumb { cursor: pointer; }
+    .res-thumb:hover { border-color: var(--cyan); box-shadow: 0 0 10px var(--cyan-glow); }
+
+    /* ---- Truncated badges ---- */
+    .trunc-badge {
+      font-size: 0.65rem; font-weight: 700; font-family: var(--mono);
+      border: 1px solid var(--red); color: var(--red);
+      border-radius: 3px; padding: 1px 6px; flex-shrink: 0;
+      letter-spacing: 0.04em;
+    }
+    .keep-badge {
+      font-size: 0.65rem; font-weight: 700; font-family: var(--mono);
+      border: 1px solid var(--green); color: var(--green);
+      border-radius: 3px; padding: 1px 6px; flex-shrink: 0;
+    }
+
+    /* ---- Media modal ---- */
+    #video-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+    #video-modal.open { display: flex; }
+    #video-modal video, #video-modal audio {
+      max-width: 90vw;
+      max-height: 80vh;
+      border: 1px solid var(--cyan);
+      box-shadow: 0 0 40px rgba(0,229,255,0.2);
+      background: #000;
+    }
+    #video-modal audio { min-width: 400px; display: none; }
+    #media-modal-img { display: none; }
+    #media-modal-img {
+      max-width: 90vw;
+      max-height: 80vh;
+      border: 1px solid var(--cyan);
+      box-shadow: 0 0 40px rgba(0,229,255,0.2);
+      object-fit: contain;
+    }
+    #video-modal-name {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      max-width: 80vw;
+      text-align: center;
+      word-break: break-all;
+    }
+    #video-modal-close {
+      position: absolute;
+      top: 18px; right: 24px;
+      background: none;
+      border: 1px solid var(--text-dim);
+      color: var(--text-dim);
+      font-size: 1rem;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-family: var(--mono);
+      border-radius: 3px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #video-modal-close:hover { border-color: var(--red); color: var(--red); }
+    .thumb-wrap { cursor: pointer; }
+    .thumb-wrap:hover { border-color: var(--cyan); box-shadow: 0 0 12px var(--cyan-glow); }
+
+    /* ---- Toast ---- */
+    #toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--bg3);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      padding: 10px 18px;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      font-family: var(--mono);
+      box-shadow: 0 0 20px var(--cyan-glow);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Recognizer // Review</h1>
+  {# TODO: re-enable dir editing + rescan when multi-dir workflow is added #}
+  <span class="dir-label">{{ directory }}</span>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-target="dashboard">Dashboard</button>
+  <button class="tab" data-target="duplicates">
+    Duplicates
+    <span class="badge {% if (dup_groups|length + resolution_variants|length + truncated_downloads|length) == 0 %}zero{% endif %}">{{ dup_groups|length + resolution_variants|length + truncated_downloads|length }}</span>
+  </button>
+  <button class="tab" data-target="unreadable">
+    Unreadable
+    <span class="badge {% if unreadable|length == 0 %}zero{% endif %}">{{ unreadable|length }}</span>
+  </button>
+  <button class="tab" data-target="staging">
+    Staging
+    <span class="badge {% if staged|length == 0 %}zero{% endif %}" id="staged-badge">{{ staged|length }}</span>
+  </button>
+  <button class="tab-action" id="cleanup-btn" onclick="runCleanup()">Cleanup</button>
+</nav>
+
+<!-- ================================================================ DASHBOARD -->
+<section id="dashboard" class="section active">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+    <div>
+      <div style="font-size:0.78rem; color:#888;">Last scan</div>
+      <div style="font-size:1.1rem; font-weight:700; color:#1a1a2e; font-family:monospace;">
+        {{ manifest.scan_time[:16]|replace('T',' ') if manifest.scan_time else '—' }}
+      </div>
+      <div style="font-size:0.75rem; color:#aaa; margin-top:3px; font-family:monospace;">{{ directory }}</div>
+    </div>
+    <button onclick="location.reload()" class="btn btn-unstage" style="font-size:0.82rem; padding:9px 18px;">
+      ↻ Refresh
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="value">{{ manifest.stats.total_files_scanned }}</div>
+      <div class="label">Files scanned</div>
+    </div>
+    <div class="stat-card {% if dup_groups|length > 0 %}highlight{% endif %}">
+      <div class="value">{{ dup_groups|length }}</div>
+      <div class="label">Duplicate groups</div>
+    </div>
+    <div class="stat-card {% if manifest.stats.total_files_renamed > 0 %}highlight{% endif %}">
+      <div class="value">{{ manifest.stats.total_files_renamed }}</div>
+      <div class="label">Files renamed (Dup###)</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{ resolution_variants|length }}</div>
+      <div class="label">Resolution variants</div>
+    </div>
+    <div class="stat-card {% if truncated_downloads|length > 0 %}highlight{% endif %}">
+      <div class="value">{{ truncated_downloads|length }}</div>
+      <div class="label">Truncated downloads</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{{ unreadable|length }}</div>
+      <div class="label">Unreadable files</div>
+    </div>
+<div class="stat-card highlight">
+      <div class="value" id="dashboard-staged-count">{{ staged|length }}</div>
+      <div class="label">Files staged for deletion</div>
+    </div>
+  </div>
+
+  <p class="section-desc">
+    Staging folder: <code>{{ staging_dir_name }}</code>
+    &nbsp;|&nbsp; Re-run <code>scan.py</code> then click Refresh to see updated results.
+  </p>
+</section>
+
+<!-- ================================================================ DUPLICATES (combined) -->
+<section id="duplicates" class="section">
+
+  <!-- ---- Confirmed Duplicates ---- -->
+  <div class="sub-section-header">
+    <span class="sub-title">Confirmed Duplicates</span>
+    <span class="sub-rule"></span>
+    <span class="sub-count">{{ dup_groups|length }} group(s)</span>
+  </div>
+  <p class="section-desc">
+    Byte-for-byte identical files (SHA-256 verified). Renamed with <code>Dup###x_</code> prefix.
+    Stage the copy you want to remove — keep at least one.
+  </p>
+
+  {% if dup_groups %}
+    {% for group_num, entries in dup_groups %}
+      <div class="group-card">
+        <div class="group-header">
+          <span class="group-id">Dup{{ "%03d"|format(group_num) }}</span>
+          <span class="group-meta">{{ entries|length }} identical files</span>
+          <span class="hash">SHA-256: {{ entries[0].hash[:16] }}…</span>
+        </div>
+        <div class="file-row">
+          {% for e in entries %}
+            <div class="file-card {% if e.renamed_to in staged %}staged{% endif %}"
+                 id="card-{{ e.renamed_to|replace(' ','_')|replace('.','_') }}">
+              <div class="thumb-wrap" data-filename="{{ e.renamed_to }}">
+                <img src="/thumb/{{ e.renamed_to }}" alt="preview" loading="lazy">
+              </div>
+              <div class="file-meta">
+                <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                  <span class="letter-badge">{{ e.letter }}</span>
+                  <span class="file-current" data-filename="{{ e.renamed_to }}">{{ e.renamed_to }}</span>
+                  <button class="btn-rename" onclick="startRename(this)" title="Rename">✏</button>
+                  <button class="btn-flag-review" onclick="flagForReview(this)" title="Flag for review">🔍</button>
+                </div>
+                <div class="file-original">was: {{ e.original_name }}</div>
+                <div class="file-stats">
+                  <span>{{ "%.1f"|format(e.size_bytes / 1048576) }} MB</span>
+                  <span>{{ e.modified_time[:16]|replace('T',' ') }}</span>
+                </div>
+              </div>
+              {% if e.renamed_to in staged %}
+                <button class="btn btn-unstage" onclick="unstageFile('{{ e.renamed_to|replace("'", "\\'") }}', this)">↩ Unstage</button>
+              {% else %}
+                <button class="btn btn-stage" onclick="stageFile('{{ e.renamed_to|replace("'", "\\'") }}', this)">Stage for deletion</button>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <span class="icon">✓</span>
+      No confirmed duplicates found.
+    </div>
+  {% endif %}
+
+  <!-- ---- Resolution Variants ---- -->
+  <div class="sub-section sub-section-header">
+    <span class="sub-title">Resolution Variants</span>
+    <span class="sub-rule"></span>
+    <span class="sub-count">{{ resolution_variants|length }} group(s)</span>
+  </div>
+  <p class="section-desc">
+    Same base name, different resolutions. Not confirmed duplicates — content differs by quality.
+    Highest resolution is marked <span style="color:var(--green);font-weight:700">KEEP</span>.
+  </p>
+
+  {% if resolution_variants %}
+    {% for base, files in resolution_variants %}
+      {% set highest = files|map(attribute='resolution')|max %}
+      <div class="group-card">
+        <div class="group-header">
+          <span class="group-id" style="font-size:0.78rem;">{{ base }}</span>
+          <span class="group-meta">{{ files|length }} resolutions</span>
+        </div>
+        <div class="res-file-row">
+          {% for f in files %}
+            <div class="res-file-item" id="card-{{ f.file|replace(' ','_')|replace('.','_') }}">
+              <img class="res-thumb" src="/thumb/{{ f.file }}" alt="" loading="lazy"
+                   data-filename="{{ f.file }}"
+                   {% if f.file.lower().endswith(('.mp4','.mp3','.jpg','.jpeg')) %}onclick="openMediaModal('{{ f.file }}')"{% endif %}>
+              <span class="res-badge {% if f.resolution == highest %}highest{% endif %}">
+                {% if f.resolution %}{{ f.resolution }}p{% else %}—{% endif %}
+              </span>
+              {% if f.resolution == highest %}<span class="keep-label">KEEP</span>{% endif %}
+              <span class="res-filename" data-filename="{{ f.file }}">{{ f.file }}</span>
+              <button class="btn-rename" onclick="startRename(this)" title="Rename">✏</button>
+              <button class="btn-flag-review" onclick="flagForReview(this)" title="Flag for review">🔍</button>
+              <span class="res-meta">{{ "%.1f"|format(f.size_bytes / 1048576) }} MB &nbsp;|&nbsp; {{ f.modified_time[:10] }}</span>
+              {% if f.file in staged %}
+                <button class="btn btn-unstage" onclick="unstageFile('{{ f.file|replace("'", "\\'") }}', this)">↩ Unstage</button>
+              {% else %}
+                <button class="btn btn-stage" onclick="stageFile('{{ f.file|replace("'", "\\'") }}', this)">Stage</button>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <span class="icon">✓</span>
+      No resolution variants found.
+    </div>
+  {% endif %}
+
+  <!-- ---- Truncated Downloads ---- -->
+  <div class="sub-section sub-section-header">
+    <span class="sub-title">Truncated Downloads</span>
+    <span class="sub-rule"></span>
+    <span class="sub-count">{{ truncated_downloads|length }} pair(s)</span>
+  </div>
+  <p class="section-desc">
+    Same opening 64KB content but significantly different sizes — the smaller file is likely
+    an interrupted download. Stage the smaller copy for deletion.
+  </p>
+
+  {% if truncated_downloads %}
+    {% for t in truncated_downloads %}
+      <div class="group-card">
+        <div class="group-header">
+          <span class="group-meta">
+            {{ "%.1f"|format(t.smaller_size_bytes / 1048576) }} MB vs {{ "%.1f"|format(t.larger_size_bytes / 1048576) }} MB
+            &nbsp;&mdash;&nbsp; smaller is {{ (t.size_ratio * 100)|int }}% of larger
+          </span>
+          {% if t.likely_redownload %}<span class="badge" style="border-color:var(--orange);color:var(--orange);">re-download</span>{% endif %}
+          <span class="hash">partial SHA: {{ t.partial_hash }}…</span>
+        </div>
+        <div class="file-row">
+          <div class="file-card {% if t.smaller_file in staged %}staged{% endif %}"
+               id="card-{{ t.smaller_file|replace(' ','_')|replace('.','_') }}">
+            <div class="thumb-wrap" data-filename="{{ t.smaller_file }}">
+              <img src="/thumb/{{ t.smaller_file }}" alt="preview" loading="lazy">
+            </div>
+            <div class="file-meta">
+              <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                <span class="trunc-badge">trunc</span>
+                <span class="file-current" data-filename="{{ t.smaller_file }}">{{ t.smaller_file }}</span>
+                <button class="btn-rename" onclick="startRename(this)" title="Rename">✏</button>
+                <button class="btn-flag-review" onclick="flagForReview(this)" title="Flag for review">🔍</button>
+              </div>
+              <div class="file-stats">
+                <span>{{ "%.1f"|format(t.smaller_size_bytes / 1048576) }} MB</span>
+                <span>{{ t.smaller_modified[:16]|replace('T',' ') }}</span>
+              </div>
+            </div>
+            {% if t.smaller_file in staged %}
+              <button class="btn btn-unstage" onclick="unstageFile('{{ t.smaller_file|replace("'", "\\'") }}', this)">↩ Unstage</button>
+            {% else %}
+              <button class="btn btn-stage" onclick="stageFile('{{ t.smaller_file|replace("'", "\\'") }}', this)">Stage for deletion</button>
+            {% endif %}
+          </div>
+          <div class="file-card" id="card-trunc-{{ t.larger_file|replace(' ','_')|replace('.','_') }}">
+            <div class="thumb-wrap" data-filename="{{ t.larger_file }}">
+              <img src="/thumb/{{ t.larger_file }}" alt="preview" loading="lazy">
+            </div>
+            <div class="file-meta">
+              <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                <span class="keep-badge">keep</span>
+                <span class="file-current" data-filename="{{ t.larger_file }}">{{ t.larger_file }}</span>
+              </div>
+              <div class="file-stats">
+                <span>{{ "%.1f"|format(t.larger_size_bytes / 1048576) }} MB</span>
+                <span>{{ t.larger_modified[:16]|replace('T',' ') }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <span class="icon">✓</span>
+      No truncated downloads detected.
+    </div>
+  {% endif %}
+
+</section>
+
+<!-- ================================================================ UNREADABLE -->
+<section id="unreadable" class="section">
+  <div class="section-title">Unreadable Files</div>
+  <p class="section-desc">
+    These files could not be identified from their magic bytes.
+    They may be corrupt, partially downloaded, or an unsupported format.
+  </p>
+
+  {% if unreadable or mismatched %}
+    <div class="issue-list">
+      {% for m in unreadable %}
+        <div class="issue-item">
+          <span class="issue-icon">⚠️</span>
+          <div style="flex:1">
+            <div class="issue-name">{{ m.file }}</div>
+            <div class="issue-note">Extension: .{{ m.extension_type }} — header unreadable or unknown</div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% for m in mismatched %}
+        <div class="issue-item">
+          <span class="issue-icon">🔀</span>
+          <div style="flex:1">
+            <div class="issue-name">{{ m.file }}</div>
+            <div class="issue-note">Extension says <strong>{{ m.extension_type }}</strong>, header says <strong>{{ m.detected_type }}</strong></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <span class="icon">✓</span>
+      No unreadable or mismatched files found.
+    </div>
+  {% endif %}
+</section>
+
+<!-- ================================================================ STAGING -->
+<section id="staging" class="section">
+  <div class="section-title">Staging — <code>{{ staging_dir_name }}</code></div>
+  <p class="section-desc">
+    Files moved here have not been permanently deleted.
+    Unstage to move them back, or delete the <code>{{ staging_dir_name }}</code> folder
+    when you are confident.
+  </p>
+  <div id="staged-list-container">
+    <div class="empty-state"><span class="icon">📂</span>Loading…</div>
+  </div>
+</section>
+
+<div id="toast"></div>
+
+<div id="video-modal">
+  <button id="video-modal-close" onclick="closeVideoModal()">✕ close</button>
+  <video id="video-modal-player" controls></video>
+  <audio id="audio-modal-player" controls autoplay></audio>
+  <img id="media-modal-img" alt="">
+  <div id="video-modal-name"></div>
+</div>
+
+<script>
+  // ---- Tab switching ----
+  document.querySelectorAll('nav.tabs .tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+      if (btn.dataset.target === 'staging') loadStagingList();
+    });
+  });
+
+  // ---- Toast ----
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ---- Update staged count badges ----
+  function updateBadges(count) {
+    document.getElementById('staged-badge').textContent = count;
+    document.getElementById('dashboard-staged-count').textContent = count;
+    const badge = document.getElementById('staged-badge');
+    badge.classList.toggle('zero', count === 0);
+  }
+
+  // ---- Stage a file ----
+  function stageFile(filename, btn) {
+    btn.disabled = true;
+    fetch('/api/stage', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({filename})
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        markCardStaged(filename, true);
+        updateBadges(data.staged_count);
+        showToast(`Staged: ${filename}`);
+      } else {
+        showToast(`Error: ${data.error}`);
+        btn.disabled = false;
+      }
+    })
+    .catch(() => { showToast('Request failed'); btn.disabled = false; });
+  }
+
+  // ---- Unstage a file ----
+  function unstageFile(filename, btn) {
+    btn.disabled = true;
+    fetch('/api/unstage', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({filename})
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        markCardStaged(filename, false);
+        updateBadges(data.staged_count);
+        showToast(`Restored: ${filename}`);
+        if (document.getElementById('staging').classList.contains('active')) {
+          loadStagingList();
+        }
+      } else {
+        showToast(`Error: ${data.error}`);
+        btn.disabled = false;
+      }
+    })
+    .catch(() => { showToast('Request failed'); btn.disabled = false; });
+  }
+
+  // ---- Update a card's visual state ----
+  function markCardStaged(filename, isStaged) {
+    // Find all cards for this filename (could appear in multiple sections)
+    document.querySelectorAll('.file-card, .res-file-item, .issue-item, .staged-item').forEach(card => {
+      const btn = card.querySelector('.btn-stage, .btn-unstage');
+      if (!btn) return;
+      const fn = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+      if (fn !== filename) return;
+
+      if (isStaged) {
+        card.classList.add('staged');
+        btn.className = 'btn btn-unstage';
+        btn.textContent = '↩ Unstage';
+        btn.setAttribute('onclick', `unstageFile('${filename}', this)`);
+        btn.disabled = false;
+      } else {
+        card.classList.remove('staged');
+        btn.className = 'btn btn-stage';
+        btn.textContent = card.classList.contains('res-file-item') ? 'Stage' : 'Stage for deletion';
+        btn.setAttribute('onclick', `stageFile('${filename}', this)`);
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // ---- Inline rename ----
+  function startRename(btn) {
+    const nameEl = btn.previousElementSibling;
+    const oldName = nameEl.dataset.filename;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldName;
+    input.className = 'rename-input';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-save-rename';
+    saveBtn.textContent = '✓ Save';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-cancel-rename';
+    cancelBtn.textContent = '✕';
+
+    nameEl.replaceWith(input);
+    btn.replaceWith(saveBtn);
+    saveBtn.after(cancelBtn);
+    input.focus();
+    input.select();
+
+    function doCancel() {
+      input.replaceWith(nameEl);
+      saveBtn.replaceWith(btn);
+      cancelBtn.remove();
+    }
+
+    function doSave() {
+      const newName = input.value.trim();
+      if (!newName || newName === oldName) { doCancel(); return; }
+      saveBtn.disabled = true;
+      cancelBtn.disabled = true;
+
+      fetch('/api/rename', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({old_filename: oldName, new_filename: newName})
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          nameEl.textContent = newName;
+          nameEl.dataset.filename = newName;
+          input.replaceWith(nameEl);
+          saveBtn.replaceWith(btn);
+          cancelBtn.remove();
+          // Update stage/unstage button onclick
+          const card = btn.closest('.file-card, .res-file-item');
+          if (card) {
+            const actionBtn = card.querySelector('.btn-stage, .btn-unstage');
+            if (actionBtn) {
+              actionBtn.setAttribute('onclick',
+                actionBtn.getAttribute('onclick').replace(`'${oldName}'`, `'${newName}'`));
+            }
+            const img = card.querySelector('img');
+            if (img) img.src = `/thumb/${encodeURIComponent(newName)}`;
+          }
+          showToast(`Renamed to: ${newName}`);
+        } else {
+          showToast(`Error: ${data.error}`);
+          saveBtn.disabled = false;
+          cancelBtn.disabled = false;
+        }
+      })
+      .catch(() => { showToast('Request failed'); saveBtn.disabled = false; cancelBtn.disabled = false; });
+    }
+
+    cancelBtn.onclick = doCancel;
+    saveBtn.onclick = doSave;
+    input.onkeydown = e => { if (e.key === 'Enter') doSave(); if (e.key === 'Escape') doCancel(); };
+  }
+
+  // ---- Flag for review ----
+  function runCleanup() {
+    const btn = document.getElementById('cleanup-btn');
+    btn.disabled = true;
+    btn.textContent = 'Running…';
+    fetch('/api/cleanup', { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showToast('Cleanup complete — returning to launcher');
+          setTimeout(() => { window.location.href = '/'; }, 1500);
+        } else {
+          showToast('Error: ' + (data.error || 'unknown'));
+          btn.disabled = false;
+          btn.textContent = 'Cleanup';
+        }
+      })
+      .catch(() => { showToast('Request failed'); btn.disabled = false; btn.textContent = 'Cleanup'; });
+  }
+
+  function flagForReview(btn) {
+    const nameEl = btn.parentElement.querySelector('[data-filename]');
+    const oldName = nameEl.dataset.filename;
+
+    if (oldName.startsWith('_Review_')) {
+      showToast('Already flagged for review');
+      return;
+    }
+
+    const newName = '_Review_' + oldName;
+    btn.disabled = true;
+
+    fetch('/api/rename', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({old_filename: oldName, new_filename: newName})
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        nameEl.textContent = newName;
+        nameEl.dataset.filename = newName;
+        const card = btn.closest('.file-card, .res-file-item');
+        if (card) {
+          const actionBtn = card.querySelector('.btn-stage, .btn-unstage');
+          if (actionBtn) {
+            actionBtn.setAttribute('onclick',
+              actionBtn.getAttribute('onclick').replace(`'${oldName}'`, `'${newName}'`));
+          }
+          const img = card.querySelector('img');
+          if (img) img.src = `/thumb/${encodeURIComponent(newName)}`;
+        }
+        btn.disabled = false;
+        showToast(`Flagged: ${newName}`);
+      } else {
+        showToast(`Error: ${data.error}`);
+        btn.disabled = false;
+      }
+    })
+    .catch(() => { showToast('Request failed'); btn.disabled = false; });
+  }
+
+  // ---- Media modal ----
+  function openMediaModal(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const video = document.getElementById('video-modal-player');
+    const audio = document.getElementById('audio-modal-player');
+    const img   = document.getElementById('media-modal-img');
+
+    // Hide all players first
+    video.style.display = 'none'; video.pause(); video.src = '';
+    audio.style.display = 'none'; audio.pause(); audio.src = '';
+    img.style.display   = 'none'; img.src = '';
+
+    if (ext === 'mp4') {
+      video.style.display = 'block';
+      video.src = '/video/' + encodeURIComponent(filename);
+      video.play();
+    } else if (ext === 'mp3') {
+      audio.style.display = 'block';
+      audio.src = '/file?f=' + encodeURIComponent(filename);
+      audio.load();
+      audio.play().catch(() => {});
+    } else if (ext === 'jpg' || ext === 'jpeg') {
+      img.style.display = 'block';
+      img.src = '/thumb/' + encodeURIComponent(filename);
+    } else {
+      return; // unsupported
+    }
+
+    document.getElementById('video-modal-name').textContent = filename;
+    document.getElementById('video-modal').classList.add('open');
+  }
+  // Keep old name as alias so res-thumb inline onclick still works
+  function openVideoModal(filename) { openMediaModal(filename); }
+
+  function closeVideoModal() {
+    const video = document.getElementById('video-modal-player');
+    const audio = document.getElementById('audio-modal-player');
+    video.pause(); video.src = '';
+    audio.pause(); audio.src = '';
+    document.getElementById('media-modal-img').src = '';
+    document.getElementById('video-modal').classList.remove('open');
+  }
+  document.getElementById('video-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('video-modal')) closeVideoModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeVideoModal();
+  });
+  // Wire clicks on all .thumb-wrap elements for mp4, mp3, jpg/jpeg
+  const PLAYABLE = new Set(['mp4', 'mp3', 'jpg', 'jpeg']);
+  document.querySelectorAll('.thumb-wrap[data-filename]').forEach(wrap => {
+    const filename = wrap.dataset.filename;
+    const ext = filename.split('.').pop().toLowerCase();
+    if (!PLAYABLE.has(ext)) return;
+    wrap.addEventListener('click', () => openMediaModal(filename));
+  });
+
+  // ---- Load staging section contents ----
+  function loadStagingList() {
+    fetch('/api/staged')
+    .then(r => r.json())
+    .then(files => {
+      const container = document.getElementById('staged-list-container');
+      if (files.length === 0) {
+        container.innerHTML = '<div class="empty-state"><span class="icon">📂</span>No files staged yet.</div>';
+        return;
+      }
+      const totalBytes = files.reduce((s, f) => s + f.size_bytes, 0);
+      const totalMB = (totalBytes / 1048576).toFixed(1);
+      let html = '<div class="staged-list">';
+      files.forEach(f => {
+        const mb = (f.size_bytes / 1048576).toFixed(1);
+        html += `
+          <div class="staged-item">
+            <span class="staged-name">${f.filename}</span>
+            <span class="staged-size">${mb} MB</span>
+            <button class="btn btn-unstage" onclick="unstageFile('${f.filename}', this)">↩ Unstage</button>
+          </div>`;
+      });
+      html += '</div>';
+      html += `<div class="staged-total">${files.length} file(s) staged &nbsp;|&nbsp; Total: <strong>${totalMB} MB</strong> recoverable if you change your mind.</div>`;
+      container.innerHTML = html;
+    });
+  }
+</script>
+</body>
+</html>

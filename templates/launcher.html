@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recognizer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap');
+
+    :root {
+      --cyan:    #00e5ff;
+      --cyan-dim: #00b8cc;
+      --bg:      #020d14;
+      --bg2:     #041824;
+      --border:  rgba(0,229,255,0.18);
+      --border-bright: rgba(0,229,255,0.5);
+      --text:    #c8eaf5;
+      --text-dim: #5a8090;
+      --mono:    'Share Tech Mono', monospace;
+      --sans:    'Exo 2', 'Segoe UI', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+
+      /* Edge glow via inset box-shadow on a pseudo-element wrapper */
+    }
+
+    /* Edge glow overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 80px 20px rgba(0,229,255,0.12),
+        inset 0 0 200px 40px rgba(0,229,255,0.06);
+      z-index: 0;
+    }
+
+    .center {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+      max-width: 560px;
+      padding: 0 24px;
+    }
+
+    .label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+
+    button[type="submit"] { display: none; }
+
+    .input-wrap {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--border-bright);
+      background: var(--bg2);
+      box-shadow: 0 0 18px rgba(0,229,255,0.08);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      padding: 0 22px;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 2px rgba(0,229,255,0.15), 0 0 30px rgba(0,229,255,0.15);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 14px 0;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      outline: none;
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--text-dim);
+    }
+
+    .error {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: #ff1744;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="center">
+    <span class="label">directory</span>
+    <form method="POST" action="/launch">
+      <div class="input-wrap">
+        <input type="text" name="directory" id="dir-input"
+               value="{{ directory or '' }}"
+               autofocus autocomplete="off" spellcheck="false">
+      </div>
+      <button type="submit"></button>
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+    </form>
+  </div>
+</body>
+</html>

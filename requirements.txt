@@ -1,0 +1,7 @@
+# scan.py uses only Python stdlib — no extra installs needed
+
+# Web UI (required)
+flask>=3.0
+
+# MP4 thumbnail generation — optional, used as fallback if ffmpeg is not installed
+# opencv-python>=4.8
